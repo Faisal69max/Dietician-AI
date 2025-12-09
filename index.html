@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dietician - Nutrition Plans</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="local_storage_backend_simulation.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            color: #ffd700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #d4af37;
+        }
+
+        .auth-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .auth-btn {
+            padding: 10px 20px;
+            background: #d4af37;
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            background: #ffd700;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.25);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #d4af37;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #d4af37;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: #0a0a0a;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            font-size: 15px;
+            color: #ffffff;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+            background: #121212;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #666;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #d4af37;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .result-content {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .result-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .result-content::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+
+        .result-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4af37, #ffd700);
+            border-radius: 5px;
+        }
+
+        .result-content h1, .result-content h2, .result-content h3 {
+            color: #ffd700;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .result-content h1 {
+            border-bottom: 3px solid #d4af37;
+            padding-bottom: 8px;
+            font-size: 1.6rem;
+        }
+
+        .result-content h2 {
+            font-size: 1.3rem;
+        }
+
+        .result-content h3 {
+            font-size: 1.1rem;
+            color: #d4af37;
+        }
+
+        .result-content ul, .result-content ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .result-content li {
+            margin-bottom: 5px;
+            color: #cccccc;
+        }
+
+        .result-content strong {
+            color: #ffd700;
+        }
+
+        .result-content p {
+            color: #cccccc;
+            margin-bottom: 12px;
+        }
+
+        .error-message {
+            background: rgba(139, 0, 0, 0.3);
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 107, 107, 0.5);
+        }
+
+        .info-box {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid #d4af37;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            color: #cccccc;
+        }
+        
+        #authContainer {
+            max-width: 450px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        
+        .auth-message {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .alert-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .alert-error {
+            background-color: #ffe0e0;
+            color: #cc0000;
+        }
+
+        .alert-success {
+            background-color: #e0ffe0;
+            color: #008000;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>AI Dietician</h1>
+                <p>Personalized Nutrition Plans</p>
+            </div>
+            <div class="auth-controls">
+                <span id="userNameDisplay" style="color: #d4af37; margin-right: 10px; display: none;"></span>
+                <button class="auth-btn" id="signOutBtn" style="display: none;">Sign Out</button>
+            </div>
+        </div>
+
+        <div id="authContainer">
+            <div class="card">
+                <h2 class="card-title" id="authTitle">Sign In</h2>
+                <div id="authMessage" class="alert-message" style="display: none;"></div>
+                
+                <form id="signInForm" style="display: block;">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="generate-btn">Sign In</button>
+                    <p style="margin-top: 15px; color: #ccc;">No account? <a href="#" id="switchToSignUp" style="color: #ffd700; text-decoration: none;">Sign Up here.</a></p>
+                </form>
+
+                <form id="signUpForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required placeholder="Create a password">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerName">Name (for display)</label>
+                        <input type="text" id="registerName" required placeholder="Enter your name">
+                    </div>
+                    <button type="submit" class="generate-btn">Sign Up</button>
+                    <p style="margin-top: 15px; color: #ccc;">Already have an account? <a href="#" id="switchToSignIn" style="color: #ffd700; text-decoration: none;">Sign In here.</a></p>
+                </form>
+            </div>
+        </div>
+
+        <div class="main-content" id="mainAppContent" style="display: none;">
+            <div class="card">
+                <h2 class="card-title">Personal Profile</h2>
+                <form id="dietForm">
+                    <div class="form-row">
+                        <div class="form-group"><label for="age">Age</label><input type="number" id="age" min="1" max="120" required placeholder="Enter your age"></div>
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select id="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="height">Height (cm)</label><input type="number" id="height" min="100" max="250" required placeholder="170"></div>
+                        <div class="form-group"><label for="weight">Weight (kg)</label><input type="number" id="weight" min="30" max="300" required placeholder="70"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityLevel">Activity Level</label>
+                        <select id="activityLevel" required>
+                            <option value="">Select Activity Level</option>
+                            <option value="sedentary">Sedentary (little/no exercise)</option>
+                            <option value="light">Light (exercise 1-3 days/week)</option>
+                            <option value="moderate">Moderate (exercise 3-5 days/week)</option>
+                            <option value="active">Active (exercise 6-7 days/week)</option>
+                            <option value="very-active">Very Active (intense daily training)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="goal">Health Goal</label>
+                        <select id="goal" required>
+                            <option value="">Select Primary Goal</option>
+                            <option value="weight-loss">Weight Loss</option>
+                            <option value="weight-gain">Weight Gain</option>
+                            <option value="muscle-gain">Muscle Gain</option>
+                            <option value="maintenance">Weight Maintenance</option>
+                            <option value="general-health">General Health & Wellness</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="allergies">Allergies & Restrictions</label>
+                        <textarea id="allergies" rows="3" placeholder="e.g., nuts, dairy, gluten-free, vegetarian, vegan, halal..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="preferences">Culinary Preferences</label>
+                        <textarea id="preferences" rows="3" placeholder="e.g., Mediterranean, Asian fusion, no spicy foods, organic preferred..."></textarea>
+                    </div>
+
+                    <button type="submit" class="generate-btn" id="generateBtn">
+                        Generate Nutrition Plan
+                    </button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Your Nutrition Plan</h2>
+                <div class="info-box">
+                    Our AI analyzes your profile to create a personalized nutrition strategy designed for you.
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Creating your nutrition plan...</p>
+                </div>
+                <div id="result" class="result-content" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const authContainer = document.getElementById('authContainer');
+        const mainAppContent = document.getElementById('mainAppContent');
+        const signInForm = document.getElementById('signInForm');
+        const signUpForm = document.getElementById('signUpForm');
+        const authTitle = document.getElementById('authTitle');
+        const authMessage = document.getElementById('authMessage');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const signOutBtn = document.getElementById('signOutBtn');
+
+        function setAuthMessage(message, type) {
+            authMessage.textContent = message;
+            authMessage.className = `alert-message alert-${type}`;
+            authMessage.style.display = 'block';
+        }
+        
+        function hideAuthMessage() {
+            authMessage.style.display = 'none';
+        }
+
+        function showSignUpForm() {
+            signInForm.style.display = 'none';
+            signUpForm.style.display = 'block';
+            authTitle.textContent = 'Sign Up';
+            hideAuthMessage();
+        }
+
+        function showSignInForm() {
+            signInForm.style.display = 'block';
+            signUpForm.style.display = 'none';
+            authTitle.textContent = 'Sign In';
+            hideAuthMessage();
+        }
+
+        function updateUI() {
+            const currentUser = getCurrentUser(); 
+
+            if (currentUser) {
+                authContainer.style.display = 'none';
+                mainAppContent.style.display = 'grid';
+                userNameDisplay.textContent = `Welcome, ${currentUser.name}!`;
+                userNameDisplay.style.display = 'block';
+                signOutBtn.style.display = 'block';
+            } else {
+                authContainer.style.display = 'block';
+                mainAppContent.style.display = 'none';
+                userNameDisplay.style.display = 'none';
+                signOutBtn.style.display = 'none';
+                showSignInForm();
+            }
+        }
+
+        document.getElementById('switchToSignUp').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSignUpForm();
+        });
+
+        document.getElementById('switchToSignIn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSignInForm();
+        });
+
+        signOutBtn.addEventListener('click', () => {
+            removeCurrentUser();
+            setAuthMessage('You have been signed out.', 'success');
+            updateUI();
+        });
+
+        signUpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const name = document.getElementById('registerName').value;
+            
+            const result = registerUser(email, password, name);
+
+            if (result.success) {
+                setAuthMessage('Success! Account created. Please sign in.', 'success');
+                signUpForm.reset();
+                showSignInForm();
+            } else {
+                setAuthMessage(`Error: ${result.message}`, 'error');
+            }
+        });
+
+        signInForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const result = authenticateUser(email, password);
+
+            if (result.success) {
+                setAuthMessage(`Welcome back, ${result.user.name}!`, 'success');
+                signInForm.reset();
+                updateUI();
+            } else {
+                setAuthMessage(`Error: ${result.message}`, 'error');
+            }
+        });
+
+        updateUI();
+
+        document.getElementById('dietForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const apiKey = "AIzaSyA2R2U_5e3Yq5RyUmI_qPAWDy1CCvqoTC4" 
+            if (!apiKey || apiKey.includes('YOUR_API_KEY')) {
+                alert('API Key configuration required. Please check the JavaScript code.');
+                return;
+            }
+
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                alert('You must be signed in to generate a plan.');
+                updateUI();
+                return;
+            }
+
+            const formData = {
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                height: document.getElementById('height').value,
+                weight: document.getElementById('weight').value,
+                activityLevel: document.getElementById('activityLevel').value,
+                goal: document.getElementById('goal').value,
+                allergies: document.getElementById('allergies').value,
+                preferences: document.getElementById('preferences').value
+            };
+
+            const heightM = formData.height / 100;
+            const bmi = (formData.weight / (heightM * heightM)).toFixed(1);
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                const prompt = `
+As an elite professional dietician and nutritionist, create a comprehensive, premium-quality personalized diet plan for the following client:
+
+**Client Profile:**
+- Name: ${currentUser.name}
+- Age: ${formData.age} years
+- Gender: ${formData.gender}
+- Height: ${formData.height} cm
+- Weight: ${formData.weight} kg
+- BMI: ${bmi}
+- Activity Level: ${formData.activityLevel}
+- Primary Goal: ${formData.goal}
+- Allergies/Restrictions: ${formData.allergies || 'None specified'}
+- Culinary Preferences: ${formData.preferences || 'None specified'}
+
+Please provide a detailed, premium diet plan in markdown format that includes:
+
+1. **Executive Health Assessment** - Comprehensive analysis of current health status, BMI interpretation, and goal feasibility
+2. **Metabolic Analysis** - Recommended daily calorie intake with detailed breakdown
+3. **Precision Macronutrient Profile** - Protein, carbohydrates, and fats (percentages and grams)
+4. **7-Day Gourmet Meal Plan** - Detailed breakfast, lunch, dinner, and snacks for each day with portion sizes
+5. **Portion Control Guidelines** - Precise serving sizes and measurements
+6. **Hydration Protocol** - Daily water intake recommendations
+7. **Premium Supplement Recommendations** - Evidence-based supplements if beneficial
+8. **Success Strategies** - Practical, actionable advice for optimal adherence
+9. **Foods to Prioritize** - Nutrient-dense, goal-aligned foods
+10. **Foods to Minimize** - Based on goals and dietary restrictions
+
+Ensure the plan is:
+- Scientifically sound and evidence-based
+- Realistic and sustainable long-term
+- Precisely tailored to goals and restrictions
+- Varied to prevent monotony
+- Respectful of cultural and personal preferences
+- Professional and premium in presentation
+
+Format the response in clean, well-structured markdown with proper headings, lists, and emphasis.
+                `;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const dietPlan = data.candidates[0].content.parts[0].text;
+                    const htmlContent = marked.parse(dietPlan);
+                    
+                    document.getElementById('result').innerHTML = htmlContent;
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    throw new Error('Invalid response format from API');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error generating nutrition plan:</strong><br>
+                        ${error.message}<br>
+                    </div>
+                `;
+                document.getElementById('result').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
